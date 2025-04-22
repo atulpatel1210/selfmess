@@ -26,6 +26,9 @@ class StudentDetail extends Model
         'paid_amount',
         'remain_amount',
         'remark',
+        'rate',
+        'rate_with_guest',
+        'status'
     ];
 
     protected $casts = [

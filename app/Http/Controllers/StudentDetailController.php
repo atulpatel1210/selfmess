@@ -190,17 +190,8 @@ class StudentDetailController extends Controller
         return $this->successResponse(null, 'Student detail deleted successfully');
     }
     
-    public function generateBill(Request $request)
+    public function generateBill()
     {
-        // $lastMonthGuestCash = $request->input('last_month_guest_cash');
-        // $lastMonthCashOnHand = $request->input('last_month_cash_on_hand');
-        // $lastMonthCollection = $request->input('last_month_collection');
-        // $currentMonthGuestCash = $request->input('current_month_guest_cash');
-
-        if (!$totalEatenDays || !$lastMonthGuestCash || !$lastMonthCashOnHand || !$lastMonthCollection || !$currentMonthGuestCash) {
-            return response()->json(['message' => 'Please provide all required parameters.'], 400);
-        }
-
         $currentMonthStart = Carbon::now()->startOfMonth();
         $currentMonthEnd = Carbon::now()->endOfMonth();
 
@@ -210,33 +201,61 @@ class StudentDetailController extends Controller
             return response()->json(['message' => 'Please add expense details for the current month.'], 400);
         }
 
-        $totalEatenDays = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->sum('total_eat_day');
+        $result = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
+            ->selectRaw('SUM(total_eat_day) as total_eaten_days, SUM(simple_guest_amount) as total_simple_guest_amount, SUM(feast_guest_amount) as total_feast_guest_amount')
+            ->first();
 
-        if ($totalEatenDays === 0) {
+        if (empty($result) || $result->total_eaten_days === null) {
             return response()->json(['message' => 'Please add student details for the current month.'], 400);
         }
 
-        $lastMonthTotalCash = $lastMonthGuestCash + $lastMonthCashOnHand + $lastMonthCollection;
-        $marchCashOnHand = $lastMonthTotalCash - $currentMonthTotalCost;
-        $currentMonthBillWithGuest = ($currentMonthTotalCost - $currentMonthGuestCash) / $totalEatenDays;
-        $currentMonthBillWithoutGuest = $currentMonthTotalCost / $totalEatenDays;
+        $totalEatenDays = $result->total_eaten_days;
+        $totalSimpleGuestAmount = $result->total_simple_guest_amount;
+        $totalFeastGuestAmount = $result->total_feast_guest_amount;
 
-        $response = [
-            'costs' => [
-                'total_cost' => $currentMonthTotalCost,
-            ],
-            'last_month' => [
-                'guest_cash' => $lastMonthGuestCash,
-                'cash_on_hand' => $lastMonthCashOnHand,
-                'collection' => $lastMonthCollection,
-                'total_cash' => $lastMonthTotalCash,
-            ],
-            'march_cash_on_hand' => $marchCashOnHand,
-            'current_month_guest_cash' => $currentMonthGuestCash,
-            'current_month_bill_with_guest' => $currentMonthBillWithGuest,
-            'current_month_bill_without_guest' => $currentMonthBillWithoutGuest,
-        ];
+        $totalGuestAmount = $totalSimpleGuestAmount + $totalFeastGuestAmount;
 
-        return response()->json($response);
+        $rate = $totalEatenDays > 0 ? round($currentMonthTotalCost / $totalEatenDays, 2) : 0;
+        $rateWithGuest = $totalEatenDays > 0 ? round(($currentMonthTotalCost - $totalGuestAmount) / $totalEatenDays, 2) : 0;
+
+        StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
+            ->update(['rate' => $rate, 'rate_with_guest' => $rateWithGuest, 'status' => 'pending']);
+
+        $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
+
+        return $this->successResponse($studentDetails, 'Bill generated and student details updated successfully for the current month.');
     }
+
+    public function updateGeneratedBill(Request $request)
+    {
+        $request->validate([
+            'rate' => 'required|numeric|min:0',
+            'status' => 'required|in:pending,generated,lock',
+        ]);
+
+        $rate = $request->rate;
+        $status = $request->status;
+
+        $currentMonthStart = Carbon::now()->startOfMonth();
+        $currentMonthEnd = Carbon::now()->endOfMonth();
+
+        $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
+
+        if ($studentDetails->isEmpty()) {
+            return response()->json(['message' => 'No student details found for current month.'], 404);
+        }
+
+        foreach ($studentDetails as $student) {
+            $amount = $student->total_eat_day * $rate;
+
+            $student->update([
+                'rate' => $rate,
+                'amount' => $amount,
+                'status' => $status === 'lock' ? 'lock' : $status,
+            ]);
+        }
+
+        return $this->successResponse($studentDetails, 'Bill updated successfully for the current month.');
+    }
+
 }
