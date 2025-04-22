@@ -111,6 +111,19 @@ class StudentDetailController extends Controller
         if ($validator->fails()) {
             return $this->errorResponse('Validation error', 422, $validator->errors());
         }
+        
+        $date = Carbon::parse($request->date);
+        $month = $date->format('m');
+        $year = $date->format('Y');
+        
+        $existingEntry = StudentDetail::where('student_id', $request->student_id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->first();
+
+        if ($existingEntry) {
+            return $this->errorResponse('Entry for this student already exists for this month.', 409);
+        }
 
         $studentDetail = StudentDetail::create($request->all());
         return $this->successResponse($studentDetail, 'Student Detail created successfully', 201);
