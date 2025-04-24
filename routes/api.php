@@ -26,6 +26,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('/expenses', ExpenseController::class);
         Route::apiResource('student-details', StudentDetailController::class);
         Route::get('/generate-bill', [StudentDetailController::class, 'generateBill']);
+        Route::post('/update-generated-bill', [StudentDetailController::class, 'updateGeneratedBill']);
+        Route::post('/get-monthly-transaction', [StudentDetailController::class, 'getMonthlyTransaction']);
         // Route::apiResource('/summaries', StudentSummaryController::class);
         // Route::apiResource('attendances', StudentAttendanceController::class);
         // Route::post('/summaries/generate-monthly', [StudentSummaryController::class, 'generateMonthlySummaries']);

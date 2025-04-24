@@ -18,6 +18,7 @@ class MonthlyTransaction extends Model
         'bill_date',
         'year',
         'month',
+        'current_month_expense',
         'total_guest_amount',
         'total_cash_on_hand',
         'total_collection',

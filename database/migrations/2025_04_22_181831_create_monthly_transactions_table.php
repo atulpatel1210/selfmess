@@ -16,6 +16,7 @@ return new class extends Migration
             $table->date('bill_date')->index(); // Added index for potential querying
             $table->smallInteger('year')->unsigned()->index();
             $table->tinyInteger('month')->unsigned()->index();
+            $table->decimal('current_month_expense', 10, 2)->default(0.00);
             $table->decimal('total_guest_amount', 10, 2)->default(0.00);
             $table->decimal('total_cash_on_hand', 10, 2)->default(0.00);
             $table->decimal('total_collection', 10, 2)->default(0.00);

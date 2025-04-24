@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Traits\ApiResponse;
 use App\Models\Expense;
+use App\Models\MonthlyTransaction;
 use Carbon\Carbon;
 
 class StudentDetailController extends Controller
@@ -226,6 +227,38 @@ class StudentDetailController extends Controller
         return $this->successResponse($studentDetails, 'Bill generated and student details updated successfully for the current month.');
     }
 
+    public function updateGeneratedBill1(Request $request)
+    {
+        $request->validate([
+            'rate' => 'required|numeric|min:0',
+            'status' => 'required|in:pending,generated,lock',
+        ]);
+
+        $rate = $request->rate;
+        $status = $request->status;
+
+        $currentMonthStart = Carbon::now()->startOfMonth();
+        $currentMonthEnd = Carbon::now()->endOfMonth();
+
+        $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
+
+        if ($studentDetails->isEmpty()) {
+            return $this->errorResponse('Student detail not found for current month.', 404);
+        }
+
+        foreach ($studentDetails as $student) {
+            $amount = $student->total_eat_day * $rate;
+
+            $student->update([
+                'rate' => $rate,
+                'amount' => $amount,
+                'status' => $status === 'lock' ? 'lock' : $status,
+            ]);
+        }
+
+        return $this->successResponse($studentDetails, 'Bill updated successfully for the current month.');
+    }
+
     public function updateGeneratedBill(Request $request)
     {
         $request->validate([
@@ -242,7 +275,7 @@ class StudentDetailController extends Controller
         $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
 
         if ($studentDetails->isEmpty()) {
-            return response()->json(['message' => 'No student details found for current month.'], 404);
+            return $this->errorResponse('Student detail not found for current month.', 404);
         }
 
         foreach ($studentDetails as $student) {
@@ -255,7 +288,60 @@ class StudentDetailController extends Controller
             ]);
         }
 
+        if ($status === 'lock') {
+            $summary = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
+                ->selectRaw('
+                    SUM(total_eat_day) as total_eat_day,
+                    SUM(simple_guest_amount) as simple_guest_amount,
+                    SUM(feast_guest_amount) as feast_guest_amount,
+                    SUM(amount) as total_amount
+                ')
+                ->first();
+
+            $currentMonthExpense = Expense::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->sum('amount');
+
+            $previousTransaction = MonthlyTransaction::whereYear('bill_date', Carbon::now()->subMonth()->year)->whereMonth('bill_date', Carbon::now()->subMonth()->month)->first();
+
+            $previousMonthCollection = $previousTransaction?->total_collection ?? 0;
+            $previousMonthCashOnHand = $previousTransaction?->end_month_cash_on_hand ?? 0;
+            $totalGuestAmount = $summary->simple_guest_amount + $summary->feast_guest_amount;
+            $currentTotalCashOnHand = $previousMonthCollection - $currentMonthExpense;
+            $totalCollection = $totalGuestAmount + $summary->total_amount;
+            $endMonthCashOnHand = $previousMonthCashOnHand + $currentTotalCashOnHand;
+
+            MonthlyTransaction::create([
+                'bill_date'             => Carbon::now()->toDateString(),
+                'year'                  => Carbon::now()->year,
+                'month'                 => Carbon::now()->month,
+                'current_month_expense' => $currentMonthExpense,
+                'total_guest_amount'    => $totalGuestAmount,
+                'total_cash_on_hand'    => $currentTotalCashOnHand,
+                'total_collection'      => $totalCollection,
+                'total_amount'          => $summary->total_amount,
+                'end_month_cash_on_hand'=> $endMonthCashOnHand,
+            ]);
+        }
+
         return $this->successResponse($studentDetails, 'Bill updated successfully for the current month.');
+    }
+
+    public function getMonthlyTransaction(Request $request)
+    {
+        $request->validate([
+            'year'  => 'required|numeric',
+            'month' => 'required|numeric|min:1|max:12',
+        ]);
+
+        $year  = $request->year;
+        $month = $request->month;
+
+        $transaction = MonthlyTransaction::where('year', $year)->where('month', $month)->first();
+
+        if (!$transaction) {
+            return $this->errorResponse('Monthly transaction not found for selected month.', 404);
+        }
+
+        return $this->successResponse($transaction, 'Monthly Transaction retrieved successfully');
     }
 
 }
