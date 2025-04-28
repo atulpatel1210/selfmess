@@ -224,40 +224,42 @@ class StudentDetailController extends Controller
 
         $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
 
-        return $this->successResponse($studentDetails, 'Bill generated and student details updated successfully for the current month.');
+        $response['rate'] = $rate;
+
+        return $this->successResponse($response, 'Bill rate generated successfully for the current month.');
     }
 
-    public function updateGeneratedBill1(Request $request)
-    {
-        $request->validate([
-            'rate' => 'required|numeric|min:0',
-            'status' => 'required|in:pending,generated,lock',
-        ]);
+    // public function updateGeneratedBill1(Request $request)
+    // {
+    //     $request->validate([
+    //         'rate' => 'required|numeric|min:0',
+    //         'status' => 'required|in:pending,generated,lock',
+    //     ]);
 
-        $rate = $request->rate;
-        $status = $request->status;
+    //     $rate = $request->rate;
+    //     $status = $request->status;
 
-        $currentMonthStart = Carbon::now()->startOfMonth();
-        $currentMonthEnd = Carbon::now()->endOfMonth();
+    //     $currentMonthStart = Carbon::now()->startOfMonth();
+    //     $currentMonthEnd = Carbon::now()->endOfMonth();
 
-        $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
+    //     $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
 
-        if ($studentDetails->isEmpty()) {
-            return $this->errorResponse('Student detail not found for current month.', 404);
-        }
+    //     if ($studentDetails->isEmpty()) {
+    //         return $this->errorResponse('Student detail not found for current month.', 404);
+    //     }
 
-        foreach ($studentDetails as $student) {
-            $amount = $student->total_eat_day * $rate;
+    //     foreach ($studentDetails as $student) {
+    //         $amount = $student->total_eat_day * $rate;
 
-            $student->update([
-                'rate' => $rate,
-                'amount' => $amount,
-                'status' => $status === 'lock' ? 'lock' : $status,
-            ]);
-        }
+    //         $student->update([
+    //             'rate' => $rate,
+    //             'amount' => $amount,
+    //             'status' => $status === 'lock' ? 'lock' : $status,
+    //         ]);
+    //     }
 
-        return $this->successResponse($studentDetails, 'Bill updated successfully for the current month.');
-    }
+    //     return $this->successResponse($studentDetails, 'Bill updated successfully for the current month.');
+    // }
 
     public function updateGeneratedBill(Request $request)
     {
