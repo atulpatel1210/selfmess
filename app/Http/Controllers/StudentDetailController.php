@@ -191,6 +191,50 @@ class StudentDetailController extends Controller
         return $this->successResponse(null, 'Student detail deleted successfully');
     }
     
+    // public function generateBill1()
+    // {
+    //     $currentMonthStart = Carbon::now()->startOfMonth();
+    //     $currentMonthEnd = Carbon::now()->endOfMonth();
+
+    //     $currentMonthTotalCost = Expense::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->sum('amount');
+
+    //     if ($currentMonthTotalCost === 0) {
+    //         return response()->json(['message' => 'Please add expense details for the current month.'], 400);
+    //     }
+
+    //     $result = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
+    //         ->selectRaw('SUM(total_eat_day) as total_eaten_days, SUM(simple_guest_amount) as total_simple_guest_amount, SUM(feast_guest_amount) as total_feast_guest_amount')
+    //         ->first();
+
+    //     if (empty($result) || $result->total_eaten_days === null) {
+    //         return response()->json(['message' => 'Please add student details for the current month.'], 400);
+    //     }
+
+    //     $totalEatenDays = $result->total_eaten_days;
+    //     $totalSimpleGuestAmount = $result->total_simple_guest_amount;
+    //     $totalFeastGuestAmount = $result->total_feast_guest_amount;
+
+    //     $totalGuestAmount = $totalSimpleGuestAmount + $totalFeastGuestAmount;
+
+    //     $rate = $totalEatenDays > 0 ? round($currentMonthTotalCost / $totalEatenDays, 2) : 0;
+    //     $rateWithGuest = $totalEatenDays > 0 ? round(($currentMonthTotalCost - $totalGuestAmount) / $totalEatenDays, 2) : 0;
+
+    //     StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
+    //         ->update(['rate' => $rate, 'rate_with_guest' => $rateWithGuest, 'status' => 'pending']);
+
+    //     $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
+
+    //     $status = !empty($studentDetails[0]['status']) ? $studentDetails[0]['status'] : 'pending';
+
+    //     $response = array(
+    //         'rate' => $rate,
+    //         'status' => $status
+    //     );
+    //     $response['rate'] = $rate;
+
+    //     return $this->successResponse($response, 'Bill rate generated successfully for the current month.');
+    // }
+
     public function generateBill()
     {
         $currentMonthStart = Carbon::now()->startOfMonth();
@@ -199,7 +243,7 @@ class StudentDetailController extends Controller
         $currentMonthTotalCost = Expense::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->sum('amount');
 
         if ($currentMonthTotalCost === 0) {
-            return response()->json(['message' => 'Please add expense details for the current month.'], 400);
+            return $this->errorResponse('Please add expense details for the current month.', 400);
         }
 
         $result = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
@@ -207,7 +251,7 @@ class StudentDetailController extends Controller
             ->first();
 
         if (empty($result) || $result->total_eaten_days === null) {
-            return response()->json(['message' => 'Please add student details for the current month.'], 400);
+            return $this->errorResponse('Please add student details for the current month.', 400);
         }
 
         $totalEatenDays = $result->total_eaten_days;
@@ -219,14 +263,32 @@ class StudentDetailController extends Controller
         $rate = $totalEatenDays > 0 ? round($currentMonthTotalCost / $totalEatenDays, 2) : 0;
         $rateWithGuest = $totalEatenDays > 0 ? round(($currentMonthTotalCost - $totalGuestAmount) / $totalEatenDays, 2) : 0;
 
-        StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
-            ->update(['rate' => $rate, 'rate_with_guest' => $rateWithGuest, 'status' => 'pending']);
+        // Check if any student detail for the current month is already generated and locked
+        $existingBill = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
+            ->whereIn('status', ['generated', 'locked'])
+            ->first();
 
-        $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
+        if ($existingBill) {
+            $response = [
+                'rate' => $existingBill->rate,
+                'status' => $existingBill->status,
+            ];
+            return $this->successResponse($response, 'Bill rate already generated for the current month.', 200);
+        } else {
+            StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
+                ->update(['rate' => $rate, 'rate_with_guest' => $rateWithGuest, 'status' => 'pending']);
 
-        $response['rate'] = $rate;
+            $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
 
-        return $this->successResponse($response, 'Bill rate generated successfully for the current month.');
+            $status = !empty($studentDetails[0]['status']) ? $studentDetails[0]['status'] : 'pending';
+
+            $response = [
+                'rate' => $rate,
+                'status' => $status,
+            ];
+
+            return $this->successResponse($response, 'Bill rate generated successfully for the current month.', 200);
+        }
     }
 
     // public function updateGeneratedBill1(Request $request)
