@@ -28,9 +28,9 @@ class CheckRole
             return $this->errorResponse('User has no role assigned', 403);
         }
 
-        if (!in_array(strtolower($user->role->name), $roles)) {
-            return $this->errorResponse('Forbidden', 403);
-        }
+        // if (!in_array(strtolower($user->role->name), $roles)) {
+        //     return $this->errorResponse('Forbidden', 403);
+        // }
 
         return $next($request);
     }
