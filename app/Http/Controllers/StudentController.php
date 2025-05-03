@@ -100,7 +100,7 @@ class StudentController extends Controller
         try {
             $student = Student::find($id);
             if(!$student){
-                return $this->errorResponse('Expense not found.', 404);
+                return $this->errorResponse('Student not found.', 404);
             }
             return $this->successResponse($student, 'Student retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
