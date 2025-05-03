@@ -89,6 +89,12 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
             $token = $user->createToken('authToken')->plainTextToken;
+            if($user->role_id == 4){
+                $student = Student::where('user_id', $user->id)->first();
+                if($student){
+                    $user->student_id = $student->id;
+                }
+            }
             return $this->successResponse([
                 'access_token' => $token,
                 'token_type' => 'Bearer',
