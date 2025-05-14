@@ -126,6 +126,7 @@ class StudentController extends Controller
             'advisor_guide' => 'nullable',
             'blood_group' => 'nullable',
             'deposit' => 'nullable|numeric',
+            'password' => 'nullable|min:6',
         ]);
     
         if ($validator->fails()) {
@@ -147,6 +148,9 @@ class StudentController extends Controller
             }
     
             $student->update($request->all());
+            $user = User::where('id', $student->user_id)->first();
+            $user->password = Hash::make($request->input('password'));
+            $user->update();
             return $this->successResponse($student, 'Student updated successfully', 200);
         }
         catch (ModelNotFoundException $e) {
