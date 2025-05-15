@@ -339,9 +339,7 @@ class StudentDetailController extends Controller
                 ')
                 ->first();
 
-            $totalDeposit = Student::selectRaw('
-                    SUM(deposit) as total_deposit,
-                ')->all();
+            $totalDeposit = Student::sum('deposit');
                 
             $currentMonthExpense = Expense::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->sum('amount');
 
@@ -354,7 +352,7 @@ class StudentDetailController extends Controller
             $currentMonthCollectionAmount = $summary->total_collection;
             $currentMonthCashOnHand = ($previousMonthTotalCollection + $previousMonthTotalCaseOnHand + $previousMonthTotalCashGuestAmount) - $currentMonthExpense;
             $total_amount = $summary->total_amount + $totalCashGuestAmount + $currentMonthCashOnHand;
-            $profit = $total_amount - !empty($totalDeposit->total_deposit) ? $totalDeposit->total_deposit : 0;
+            $profit = $total_amount - !empty($totalDeposit) ? $totalDeposit : 0;
 
             MonthlyTransaction::create([
                 'bill_date'                         => Carbon::now()->toDateString(),
