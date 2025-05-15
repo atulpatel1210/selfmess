@@ -292,7 +292,7 @@ class StudentDetailController extends Controller
         }
     }
 
-    public function updateGeneratedBill(Request $request)
+    public function updateGeneratedBill_old(Request $request)
     {
         $request->validate([
             'rate' => 'required|numeric|min:0',
@@ -390,6 +390,123 @@ class StudentDetailController extends Controller
 
         return $this->successResponse($studentDetails, 'Bill updated successfully for the current month.');
     }
+
+    public function updateGeneratedBill(Request $request)
+    {
+        $request->validate([
+            'rate' => 'required|numeric|min:0',
+            'status' => 'required|in:pending,generated,lock',
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2000', // adjust min year as needed
+        ]);
+
+        $rate = $request->rate;
+        $status = $request->status;
+        $month = $request->month;
+        $year = $request->year;
+
+        $currentMonthStart = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $currentMonthEnd = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+
+        $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
+
+        if ($studentDetails->isEmpty()) {
+            return $this->errorResponse('Student detail not found for current month.', 404);
+        }
+
+        foreach ($studentDetails as $student) {
+            $previousMonthDate = Carbon::createFromDate($year, $month, 1)->subMonth();
+            $previousDetail = StudentDetail::where('id', $student->id)
+                ->whereYear('date', $previousMonthDate->year)
+                ->whereMonth('date', $previousMonthDate->month)
+                ->first();
+
+            $simple_guest_amount = $student->simple_guest_amount ?? 0;
+            $feast_guest_amount = $student->feast_guest_amount ?? 0;
+            $remain_amount = $student->remain_amount ?? 0;
+            $panelty_amount = $student->panelty_amount ?? 0;
+
+            $amount = ($student->total_eat_day * $rate) + $simple_guest_amount + $feast_guest_amount + $remain_amount + $panelty_amount;
+
+            $student->update([
+                'rate' => $rate,
+                'amount' => $amount,
+                'status' => $status === 'lock' ? 'lock' : $status,
+            ]);
+        }
+
+        if ($status === 'lock') {
+            $summary = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
+                ->selectRaw('
+                    SUM(total_eat_day) as current_month_total_eat_day,
+                    SUM(cut_day) as current_month_total_cut_day,
+                    SUM(total_day) as current_month_total_day,
+                    SUM(simple_guest_amount) as simple_guest_amount,
+                    SUM(feast_guest_amount) as feast_guest_amount,
+                    SUM(amount) as total_amount,
+                    SUM(paid_amount) as total_collection,
+                    SUM(remain_amount) as current_month_total_remaining
+                ')
+                ->first();
+
+            $totalDeposit = Student::sum('deposit');
+
+            $currentMonthExpense = Expense::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->sum('amount');
+
+            $previousMonthDate = Carbon::createFromDate($year, $month, 1)->subMonth();
+            $previousTransaction = MonthlyTransaction::whereYear('bill_date', $previousMonthDate->year)
+                ->whereMonth('bill_date', $previousMonthDate->month)
+                ->first();
+
+            $previousMonthTotalCollection = $previousTransaction->current_total_collection ?? 0;
+            $previousMonthTotalCaseOnHand = $previousTransaction->current_month_total_cash_on_hand ?? 0;
+            $previousMonthTotalCashGuestAmount = $previousTransaction->current_month_total_guest_amount ?? 0;
+
+            $totalCashGuestAmount = $request->guest_cash ?? 0;
+            $currentMonthCollectionAmount = $summary->total_collection;
+            $currentMonthCashOnHand = ($previousMonthTotalCollection + $previousMonthTotalCaseOnHand + $previousMonthTotalCashGuestAmount) - $currentMonthExpense;
+            $total_amount = $summary->total_amount + $totalCashGuestAmount + $currentMonthCashOnHand;
+            $profit = $total_amount - ($totalDeposit ?? 0);
+
+            $existingTransaction = MonthlyTransaction::where('year', $year)
+                ->where('month', $month)
+                ->first();
+
+            if (!$existingTransaction) {
+                MonthlyTransaction::create([
+                    'bill_date'                         => Carbon::createFromDate($year, $month, 1)->toDateString(),
+                    'year'                              => $year,
+                    'month'                             => $month,
+                    'current_month_expense'             => $currentMonthExpense,
+                    'current_total_collection'          => $currentMonthCollectionAmount,
+                    'current_month_total_guest_amount'  => $totalCashGuestAmount,
+                    'current_month_total_cash_on_hand'  => $currentMonthCashOnHand,
+                    'current_month_total_amount'        => $total_amount,
+                    'current_total_remaining'           => $summary->current_month_total_remaining,
+                    'current_month_total_eat_day'       => $summary->current_month_total_eat_day,
+                    'current_month_total_cut_day'       => $summary->current_month_total_cut_day,
+                    'current_month_total_day'           => $summary->current_month_total_day,
+                    'current_month_profit'              => $profit
+                ]);
+            } else {
+                $existingTransaction->update([
+                    'current_month_expense'             => $currentMonthExpense,
+                    'current_total_collection'          => $currentMonthCollectionAmount,
+                    'current_month_total_guest_amount'  => $totalCashGuestAmount,
+                    'current_month_total_cash_on_hand'  => $currentMonthCashOnHand,
+                    'current_month_total_amount'        => $total_amount,
+                    'current_total_remaining'           => $summary->current_month_total_remaining,
+                    'current_month_total_eat_day'       => $summary->current_month_total_eat_day,
+                    'current_month_total_cut_day'       => $summary->current_month_total_cut_day,
+                    'current_month_total_day'           => $summary->current_month_total_day,
+                    'current_month_profit'              => $profit
+                ]);
+            }
+        }
+
+        return $this->successResponse($studentDetails, 'Bill updated successfully for the selected month.');
+    }
+
 
     public function getMonthlyTransaction(Request $request)
     {
