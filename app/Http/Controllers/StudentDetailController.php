@@ -312,7 +312,11 @@ class StudentDetailController extends Controller
 
         foreach ($studentDetails as $student) {
             $previousDetail = StudentDetail::where('id', $student->id)->whereYear('date', Carbon::now()->subMonth()->year)->whereMonth('date', Carbon::now()->subMonth()->month)->first();
-            $amount = ($student->total_eat_day * $rate) + $student->simple_guest_amount + $student->feast_guest_amount + $previousDetail->remain_amount + $student->panelty_amount;
+            $simple_guest_amount = !empty($student->simple_guest_amount) ? $student->simple_guest_amount : 0;
+            $feast_guest_amount = !empty($student->feast_guest_amount) ? $student->feast_guest_amount : 0;
+            $remain_amount = !empty($student->remain_amount) ? $student->remain_amount : 0;
+            $panelty_amount = !empty($student->panelty_amount) ? $student->panelty_amount : 0;
+            $amount = ($student->total_eat_day * $rate) + $simple_guest_amount + $feast_guest_amount + $remain_amount + $panelty_amount;
             $student->update([
                 'rate' => $rate,
                 'amount' => $amount,
