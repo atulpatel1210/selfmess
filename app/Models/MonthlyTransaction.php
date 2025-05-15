@@ -19,11 +19,15 @@ class MonthlyTransaction extends Model
         'year',
         'month',
         'current_month_expense',
-        'total_guest_amount',
-        'total_cash_on_hand',
-        'total_collection',
-        'total_amount',
-        'end_month_cash_on_hand',
+        'current_total_collection',
+        'current_month_total_guest_amount',
+        'current_month_total_cash_on_hand',
+        'current_month_total_amount',
+        'current_total_remaining',
+        'current_month_total_eat_day',
+        'current_month_total_cut_day',
+        'current_month_total_day',
+        'current_month_profit'
     ];
 
     /**
