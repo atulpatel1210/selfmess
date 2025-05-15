@@ -9,6 +9,7 @@ use App\Traits\ApiResponse;
 use App\Models\Expense;
 use App\Models\MonthlyTransaction;
 use Carbon\Carbon;
+use App\Models\Student;
 
 class StudentDetailController extends Controller
 {
