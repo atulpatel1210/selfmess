@@ -334,7 +334,7 @@ class StudentDetailController extends Controller
                     SUM(feast_guest_amount) as feast_guest_amount,
                     SUM(amount) as total_amount,
                     SUM(paid_amount) as total_collection,
-                    SUM(ramaining_amount) as current_month_total_remaining,
+                    SUM(ramaining_amount) as current_month_total_remaining
                 ')
                 ->first();
 
