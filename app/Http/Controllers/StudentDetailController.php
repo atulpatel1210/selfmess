@@ -354,21 +354,38 @@ class StudentDetailController extends Controller
             $total_amount = $summary->total_amount + $totalCashGuestAmount + $currentMonthCashOnHand;
             $profit = $total_amount - !empty($totalDeposit) ? $totalDeposit : 0;
 
-            MonthlyTransaction::create([
-                'bill_date'                         => Carbon::now()->toDateString(),
-                'year'                              => Carbon::now()->year,
-                'month'                             => Carbon::now()->month,
-                'current_month_expense'             => $currentMonthExpense,
-                'current_total_collection'          => $currentMonthCollectionAmount,
-                'current_month_total_guest_amount'  => $totalCashGuestAmount,
-                'current_month_total_cash_on_hand'  => $currentMonthCashOnHand,
-                'current_month_total_amount'        => $total_amount,
-                'current_total_remaining'           => $summary->current_month_total_remaining,
-                'current_month_total_eat_day'       => $summary->current_month_total_eat_day,
-                'current_month_total_cut_day'       => $summary->current_month_total_cut_day,
-                'current_month_total_day'           => $summary->current_month_total_day,
-                'current_month_profit'              => $profit
-            ]);
+            $existingTransaction = MonthlyTransaction::where('year', Carbon::now()->year)->where('month', Carbon::now()->month)->first();
+            
+            if (!$existingTransaction) {
+                MonthlyTransaction::create([
+                    'bill_date'                         => Carbon::now()->toDateString(),
+                    'year'                              => Carbon::now()->year,
+                    'month'                             => Carbon::now()->month,
+                    'current_month_expense'             => $currentMonthExpense,
+                    'current_total_collection'          => $currentMonthCollectionAmount,
+                    'current_month_total_guest_amount'  => $totalCashGuestAmount,
+                    'current_month_total_cash_on_hand'  => $currentMonthCashOnHand,
+                    'current_month_total_amount'        => $total_amount,
+                    'current_total_remaining'           => $summary->current_month_total_remaining,
+                    'current_month_total_eat_day'       => $summary->current_month_total_eat_day,
+                    'current_month_total_cut_day'       => $summary->current_month_total_cut_day,
+                    'current_month_total_day'           => $summary->current_month_total_day,
+                    'current_month_profit'              => $profit
+                ]);
+            } else {
+                $existingTransaction->update([
+                    'current_month_expense'             => $currentMonthExpense,
+                    'current_total_collection'          => $currentMonthCollectionAmount,
+                    'current_month_total_guest_amount'  => $totalCashGuestAmount,
+                    'current_month_total_cash_on_hand'  => $currentMonthCashOnHand,
+                    'current_month_total_amount'        => $total_amount,
+                    'current_total_remaining'           => $summary->current_month_total_remaining,
+                    'current_month_total_eat_day'       => $summary->current_month_total_eat_day,
+                    'current_month_total_cut_day'       => $summary->current_month_total_cut_day,
+                    'current_month_total_day'           => $summary->current_month_total_day,
+                    'current_month_profit'              => $profit
+                ]);
+            }
         }
 
         return $this->successResponse($studentDetails, 'Bill updated successfully for the current month.');
