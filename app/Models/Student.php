@@ -25,6 +25,8 @@ class Student extends Model
         'blood_group',
         'deposit',
         'user_id',
+        'registration_no',
+        'college_name',
     ];
 
     public function user()

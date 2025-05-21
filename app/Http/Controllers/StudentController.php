@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Traits\ApiResponse;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 
 class StudentController extends Controller
@@ -53,6 +54,8 @@ class StudentController extends Controller
             'blood_group' => 'nullable',
             'deposit' => 'nullable|numeric',
             'password' => 'required|min:6',
+            'registration_no' => 'required',
+            'college_name' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -85,6 +88,8 @@ class StudentController extends Controller
                 'blood_group' => $request->input('blood_group'),
                 'deposit' => $request->input('deposit'),
                 'user_id' => $user->id,
+                'registration_no' => $request->input('registration_no'),
+                'college_name' => $request->input('college_name'),
             ]);
             return $this->successResponse($student, 'Student created successfully', 201);
         } catch (QueryException $e) {
@@ -127,6 +132,8 @@ class StudentController extends Controller
             'blood_group' => 'nullable',
             'deposit' => 'nullable|numeric',
             'password' => 'nullable|min:6',
+            'registration_no' => 'required',
+            'college_name' => 'required',
         ]);
     
         if ($validator->fails()) {
