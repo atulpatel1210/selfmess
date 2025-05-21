@@ -426,7 +426,9 @@ class StudentDetailController extends Controller
             $remain_amount = $student->remain_amount ?? 0;
             $panelty_amount = $student->panelty_amount ?? 0;
 
-            $total_amount = ($student->total_eat_day * $rate) + $simple_guest_amount + $feast_guest_amount + $remain_amount + $panelty_amount;
+            $previousMonthRemain = !empty($previousDetail->remain_amount) ? $previousDetail->remain_amount : 0;
+
+            $total_amount = ($student->total_eat_day * $rate) + $simple_guest_amount + $feast_guest_amount + $remain_amount + $panelty_amount + + $previousMonthRemain;
             $amount = $student->total_eat_day * $rate;
 
             $student->update([
