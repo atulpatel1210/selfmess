@@ -426,11 +426,13 @@ class StudentDetailController extends Controller
             $remain_amount = $student->remain_amount ?? 0;
             $panelty_amount = $student->panelty_amount ?? 0;
 
-            $amount = ($student->total_eat_day * $rate) + $simple_guest_amount + $feast_guest_amount + $remain_amount + $panelty_amount;
+            $total_amount = ($student->total_eat_day * $rate) + $simple_guest_amount + $feast_guest_amount + $remain_amount + $panelty_amount;
+            $amount = $student->total_eat_day * $rate;
 
             $student->update([
                 'rate' => $rate,
                 'amount' => $amount,
+                'total_amount' => $total_amount,
                 'status' => $status === 'lock' ? 'lock' : $status,
             ]);
         }
