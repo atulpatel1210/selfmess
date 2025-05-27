@@ -194,6 +194,8 @@ class StudentDetailController extends Controller
 
     public function generateBill()
     {
+        $month = request()->query('month');
+        $year = request()->query('year'); 
         $startOfMonth = Carbon::createFromDate($year ?? now()->year, $month ?? now()->month, 1)->startOfMonth();
         $endOfMonth = Carbon::createFromDate($year ?? now()->year, $month ?? now()->month, 1)->endOfMonth();
 
@@ -230,7 +232,7 @@ class StudentDetailController extends Controller
                 'rate' => $existingBill->rate,
                 'status' => $existingBill->status,
             ];
-            return $this->successResponse($response, 'Bill rate already generated for the current month.', 200);
+            return $this->successResponse($response, 'Bill rate already generated for the selected month.', 200);
         } else {
             StudentDetail::whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->update(['rate' => $rate, 'rate_with_guest' => $rateWithGuest, 'status' => 'pending']);
@@ -244,7 +246,7 @@ class StudentDetailController extends Controller
                 'status' => $status,
             ];
 
-            return $this->successResponse($response, 'Bill rate generated successfully for the current month.', 200);
+            return $this->successResponse($response, 'Bill rate generated successfully for the selected month.', 200);
         }
     }
 
