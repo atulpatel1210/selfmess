@@ -10,6 +10,7 @@ use App\Models\Expense;
 use App\Models\MonthlyTransaction;
 use Carbon\Carbon;
 use App\Models\Student;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class StudentDetailController extends Controller
 {
@@ -256,7 +257,7 @@ class StudentDetailController extends Controller
             'rate' => 'required|numeric|min:0',
             'status' => 'required|in:pending,generated,lock',
             'month' => 'required|integer|min:1|max:12',
-            'year' => 'required|integer|min:2000', // adjust min year as needed
+            'year' => 'required|integer|min:2000',
         ]);
 
         $rate = $request->rate;
@@ -294,6 +295,7 @@ class StudentDetailController extends Controller
                 'rate' => $rate,
                 'amount' => $amount,
                 'total_amount' => $total_amount,
+                'due_amount' => $previousMonthRemain,
                 'status' => $status === 'lock' ? 'lock' : $status,
             ]);
         }
@@ -328,6 +330,7 @@ class StudentDetailController extends Controller
             $totalCashGuestAmount = $request->guest_cash ?? 0;
             $currentMonthCollectionAmount = $summary->total_collection;
             $currentMonthCashOnHand = ($previousMonthTotalCollection + $previousMonthTotalCaseOnHand + $previousMonthTotalCashGuestAmount) - $currentMonthExpense;
+            $previousMonthTotalAmount = $previousMonthTotalCollection + $previousMonthTotalCaseOnHand + $previousMonthTotalCashGuestAmount;
             $total_amount = $summary->total_amount + $totalCashGuestAmount + $currentMonthCashOnHand;
             $profit = $total_amount - ($totalDeposit ?? 0);
 
@@ -349,6 +352,10 @@ class StudentDetailController extends Controller
                     'current_month_total_eat_day'       => $summary->current_month_total_eat_day,
                     'current_month_total_cut_day'       => $summary->current_month_total_cut_day,
                     'current_month_total_day'           => $summary->current_month_total_day,
+                    'last_month_total_collection'       => $previousMonthTotalCollection,
+                    'last_month_total_case_on_hand'     => $previousMonthTotalCaseOnHand,
+                    'last_month_total_cash_guest_amount'=> $previousMonthTotalCashGuestAmount,
+                    'last_month_total_amount'           => $previousMonthTotalAmount,
                     'current_month_profit'              => $profit
                 ]);
             } else {
@@ -362,6 +369,10 @@ class StudentDetailController extends Controller
                     'current_month_total_eat_day'       => $summary->current_month_total_eat_day,
                     'current_month_total_cut_day'       => $summary->current_month_total_cut_day,
                     'current_month_total_day'           => $summary->current_month_total_day,
+                    'last_month_total_collection'       => $previousMonthTotalCollection,
+                    'last_month_total_case_on_hand'     => $previousMonthTotalCaseOnHand,
+                    'last_month_total_cash_guest_amount'=> $previousMonthTotalCashGuestAmount,
+                    'last_month_total_amount'           => $previousMonthTotalAmount,
                     'current_month_profit'              => $profit
                 ]);
             }

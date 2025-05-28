@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentSummaryController;
 use App\Http\Controllers\StudentAttendanceController;
@@ -28,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/generate-bill', [StudentDetailController::class, 'generateBill']);
         Route::post('/update-generated-bill', [StudentDetailController::class, 'updateGeneratedBill']);
         Route::post('/get-monthly-transaction', [StudentDetailController::class, 'getMonthlyTransaction']);
+        Route::apiResource('/configs', ConfigController::class);
         // Route::apiResource('/summaries', StudentSummaryController::class);
         // Route::apiResource('attendances', StudentAttendanceController::class);
         // Route::post('/summaries/generate-monthly', [StudentSummaryController::class, 'generateMonthlySummaries']);
