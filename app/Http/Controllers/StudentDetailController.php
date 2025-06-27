@@ -276,7 +276,7 @@ class StudentDetailController extends Controller
 
         foreach ($studentDetails as $student) {
             $previousMonthDate = Carbon::createFromDate($year, $month, 1)->subMonth();
-            $previousDetail = StudentDetail::where('id', $student->id)
+            $previousDetail = StudentDetail::where('student_id', $student->student_id)
                 ->whereYear('date', $previousMonthDate->year)
                 ->whereMonth('date', $previousMonthDate->month)
                 ->first();

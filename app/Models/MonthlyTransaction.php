@@ -27,7 +27,11 @@ class MonthlyTransaction extends Model
         'current_month_total_eat_day',
         'current_month_total_cut_day',
         'current_month_total_day',
-        'current_month_profit'
+        'current_month_profit',
+        'last_month_total_collection',
+        'last_month_total_case_on_hand',
+        'last_month_total_cash_guest_amount',
+        'last_month_total_amount'
     ];
 
     /**
