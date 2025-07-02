@@ -1,0 +1,9 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /frontend/
+  
+  # Allow access to manifest and asset files
+  <FilesMatch "\.(json|ico|png|jpg|jpeg|gif|css|js)$">
+    Require all granted
+  </FilesMatch>
+</IfModule>
