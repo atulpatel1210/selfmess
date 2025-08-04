@@ -197,8 +197,10 @@ class StudentDetailController extends Controller
     {
         $month = request()->query('month');
         $year = request()->query('year'); 
-        $startOfMonth = Carbon::createFromDate($year ?? now()->year, $month ?? now()->month, 1)->startOfMonth();
-        $endOfMonth = Carbon::createFromDate($year ?? now()->year, $month ?? now()->month, 1)->endOfMonth();
+        // $startOfMonth = Carbon::createFromDate($year ?? now()->year, $month ?? now()->month, 1)->startOfMonth();
+        // $endOfMonth = Carbon::createFromDate($year ?? now()->year, $month ?? now()->month, 1)->endOfMonth();
+        $startOfMonth = Carbon::createFromDate($year ?? now()->year, $month ?? now()->month, 1)->startOfMonth()->toDateString();
+        $endOfMonth = Carbon::createFromDate($year ?? now()->year, $month ?? now()->month, 1)->endOfMonth()->toDateString();
 
         $totalCost = Expense::whereBetween('date', [$startOfMonth, $endOfMonth])->sum('amount');
 
@@ -225,7 +227,7 @@ class StudentDetailController extends Controller
 
         // Check if any student detail for the current month is already generated and locked
         $existingBill = StudentDetail::whereBetween('date', [$startOfMonth , $endOfMonth])
-            ->whereIn('status', ['generated', 'locked'])
+            ->whereIn('status', ['generated', 'lock'])
             ->first();
 
         if ($existingBill) {
