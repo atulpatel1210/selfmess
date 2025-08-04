@@ -224,7 +224,7 @@ class StudentDetailController extends Controller
         $rateWithGuest = $totalEatenDays > 0 ? round(($totalCost  - $totalGuestAmount) / $totalEatenDays, 2) : 0;
 
         // Check if any student detail for the current month is already generated and locked
-        $existingBill = StudentDetail::whereBetween('date', [$totalCost , $endOfMonth])
+        $existingBill = StudentDetail::whereBetween('date', [$startOfMonth , $endOfMonth])
             ->whereIn('status', ['generated', 'locked'])
             ->first();
 
