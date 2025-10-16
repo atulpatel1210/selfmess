@@ -402,4 +402,70 @@ class StudentDetailController extends Controller
         return $this->successResponse($transaction, 'Monthly Transaction retrieved successfully');
     }
 
+    public function bulkStore(Request $request)
+    {
+        $request->validate([
+            'student_details' => 'required|array',
+            'student_details.*.student_id' => 'required|integer',
+            'student_details.*.total_day' => 'required|integer',
+            'student_details.*.total_eat_day' => 'required|integer',
+            'student_details.*.cut_day' => 'required|integer',
+            'student_details.*.amount' => 'required|numeric',
+            'student_details.*.date' => 'required|date',
+            'student_details.*.simple_guest' => 'nullable|integer',
+            'student_details.*.simple_guest_amount' => 'nullable|numeric',
+            'student_details.*.feast_guest' => 'nullable|integer',
+            'student_details.*.feast_guest_amount' => 'nullable|numeric',
+            'student_details.*.due_amount' => 'nullable|numeric',
+            'student_details.*.penalty_amount' => 'nullable|numeric',
+            'student_details.*.total_amount' => 'required|numeric',
+            'student_details.*.paid_amount' => 'required|numeric',
+            'student_details.*.remain_amount' => 'required|numeric',
+            'student_details.*.remark' => 'nullable|string',
+            'student_details.*.rate' => 'required|numeric',
+            'student_details.*.rate_with_guest' => 'nullable|numeric',
+            'student_details.*.status' => 'required|in:pending,generated,lock',
+        ]);
+
+        $insertedCount = 0;
+
+        foreach ($request->student_details as $detail) {
+            $updated = StudentDetail::updateOrInsert(
+                [
+                    'student_id' => $detail['student_id'],
+                    'date' => $detail['date'], // composite key
+                ],
+                [
+                    'total_day' => $detail['total_day'],
+                    'total_eat_day' => $detail['total_eat_day'],
+                    'cut_day' => $detail['cut_day'],
+                    'amount' => $detail['amount'],
+                    'simple_guest' => $detail['simple_guest'] ?? 0,
+                    'simple_guest_amount' => $detail['simple_guest_amount'] ?? 0,
+                    'feast_guest' => $detail['feast_guest'] ?? 0,
+                    'feast_guest_amount' => $detail['feast_guest_amount'] ?? 0,
+                    'due_amount' => $detail['due_amount'] ?? 0,
+                    'penalty_amount' => $detail['penalty_amount'] ?? 0,
+                    'total_amount' => $detail['total_amount'],
+                    'paid_amount' => $detail['paid_amount'],
+                    'remain_amount' => $detail['remain_amount'],
+                    'remark' => $detail['remark'] ?? null,
+                    'rate' => $detail['rate'],
+                    'rate_with_guest' => $detail['rate_with_guest'] ?? null,
+                    'status' => $detail['status'],
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
+
+            $insertedCount++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Student details inserted/updated successfully',
+            'processed_count' => $insertedCount
+        ]);
+    }
+
 }
