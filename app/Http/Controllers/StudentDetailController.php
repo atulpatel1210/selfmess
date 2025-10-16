@@ -460,12 +460,8 @@ class StudentDetailController extends Controller
 
             $insertedCount++;
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Student details inserted/updated successfully',
-            'processed_count' => $insertedCount
-        ]);
+        $data['processed_count'] = $insertedCount;
+        return $this->successResponse($data, 'Student details inserted/updated successfully');
     }
 
 }
