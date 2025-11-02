@@ -610,4 +610,17 @@ class StudentDetailController extends Controller
         }
     }
 
+    public function truncateAllTables()
+    {
+        try {
+            \DB::table('student_details')->truncate();
+            \DB::table('monthly_transactions')->truncate();
+            \DB::table('expenses')->truncate();
+
+            return $this->successResponse([], 'All tables clean successfully.');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to clean tables: ' . $e->getMessage(), 500);
+        }
+    }
+
 }

@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/get-monthly-transaction', [StudentDetailController::class, 'getMonthlyTransaction']);
         Route::post('/bulk-store', [StudentDetailController::class, 'bulkStore']);
         Route::post('/delete-monthly-data', [StudentDetailController::class, 'deleteMonthlyData']);
+        Route::post('/truncate-tables', [StudentDetailController::class, 'truncateAllTables']);
         Route::apiResource('/configs', ConfigController::class);
         // Route::apiResource('/summaries', StudentSummaryController::class);
         // Route::apiResource('attendances', StudentAttendanceController::class);
