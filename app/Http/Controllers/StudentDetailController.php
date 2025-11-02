@@ -402,6 +402,93 @@ class StudentDetailController extends Controller
         return $this->successResponse($transaction, 'Monthly Transaction retrieved successfully');
     }
 
+    // public function bulkStore(Request $request)
+    // {
+    //     // $request->validate([
+    //     //     'student_details' => 'required|array',
+    //     //     'student_details.*.student_id' => 'required|integer',
+    //     //     'student_details.*.total_day' => 'required|integer',
+    //     //     'student_details.*.total_eat_day' => 'required|integer',
+    //     //     'student_details.*.cut_day' => 'required|integer',
+    //     //     'student_details.*.amount' => 'required|numeric',
+    //     //     'student_details.*.date' => 'required|date',
+    //     //     'student_details.*.simple_guest' => 'nullable|integer',
+    //     //     'student_details.*.simple_guest_amount' => 'nullable|numeric',
+    //     //     'student_details.*.feast_guest' => 'nullable|integer',
+    //     //     'student_details.*.feast_guest_amount' => 'nullable|numeric',
+    //     //     'student_details.*.due_amount' => 'nullable|numeric',
+    //     //     'student_details.*.penalty_amount' => 'nullable|numeric',
+    //     //     'student_details.*.total_amount' => 'required|numeric',
+    //     //     'student_details.*.paid_amount' => 'required|numeric',
+    //     //     'student_details.*.remain_amount' => 'required|numeric',
+    //     //     'student_details.*.remark' => 'nullable|string',
+    //     //     'student_details.*.rate' => 'required|numeric',
+    //     //     'student_details.*.rate_with_guest' => 'nullable|numeric',
+    //     //     'student_details.*.status' => 'required|in:pending,generated,lock',
+    //     // ]);
+
+    //     $request->validate([
+    //         'student_details' => 'required|array',
+    //         'student_details.*.student_id' => 'required|integer|exists:students,id',
+    //         'student_details.*.total_day' => 'required|integer',
+    //         'student_details.*.total_eat_day' => 'required|integer',
+    //         'student_details.*.cut_day' => 'required|integer',
+    //         'student_details.*.amount' => 'required|numeric',
+    //         'student_details.*.date' => 'required|date',
+    //         'student_details.*.simple_guest' => 'nullable|integer',
+    //         'student_details.*.simple_guest_amount' => 'nullable|numeric',
+    //         'student_details.*.feast_guest' => 'nullable|integer',
+    //         'student_details.*.feast_guest_amount' => 'nullable|numeric',
+    //         'student_details.*.due_amount' => 'nullable|numeric',
+    //         'student_details.*.penalty_amount' => 'nullable|numeric',
+    //         'student_details.*.total_amount' => 'required|numeric',
+    //         'student_details.*.paid_amount' => 'required|numeric',
+    //         'student_details.*.remain_amount' => 'required|numeric',
+    //         'student_details.*.remark' => 'nullable|string',
+    //         'student_details.*.rate' => 'required|numeric',
+    //         'student_details.*.rate_with_guest' => 'nullable|numeric',
+    //         'student_details.*.status' => 'required|in:pending,generated,lock',
+    //     ], [
+    //         'student_details.*.student_id.exists' => 'The selected student ID :input does not exist in students table.',
+    //     ]);
+
+    //     $insertedCount = 0;
+
+    //     foreach ($request->student_details as $detail) {
+    //         $updated = StudentDetail::updateOrInsert(
+    //             [
+    //                 'student_id' => $detail['student_id'],
+    //                 'date' => $detail['date'], // composite key
+    //             ],
+    //             [
+    //                 'total_day' => $detail['total_day'],
+    //                 'total_eat_day' => $detail['total_eat_day'],
+    //                 'cut_day' => $detail['cut_day'],
+    //                 'amount' => $detail['amount'],
+    //                 'simple_guest' => $detail['simple_guest'] ?? 0,
+    //                 'simple_guest_amount' => $detail['simple_guest_amount'] ?? 0,
+    //                 'feast_guest' => $detail['feast_guest'] ?? 0,
+    //                 'feast_guest_amount' => $detail['feast_guest_amount'] ?? 0,
+    //                 'due_amount' => $detail['due_amount'] ?? 0,
+    //                 'penalty_amount' => $detail['penalty_amount'] ?? 0,
+    //                 'total_amount' => $detail['total_amount'],
+    //                 'paid_amount' => $detail['paid_amount'],
+    //                 'remain_amount' => $detail['remain_amount'],
+    //                 'remark' => $detail['remark'] ?? null,
+    //                 'rate' => $detail['rate'],
+    //                 'rate_with_guest' => $detail['rate_with_guest'] ?? 0,
+    //                 'status' => $detail['status'],
+    //                 'updated_at' => now(),
+    //                 'created_at' => now(),
+    //             ]
+    //         );
+
+    //         $insertedCount++;
+    //     }
+    //     $data['processed_count'] = $insertedCount;
+    //     return $this->successResponse($data, 'Student details inserted/updated successfully');
+    // }
+
     public function bulkStore(Request $request)
     {
         $request->validate([
@@ -427,10 +514,25 @@ class StudentDetailController extends Controller
             'student_details.*.status' => 'required|in:pending,generated,lock',
         ]);
 
+        // Collect all unique student IDs from request
+        $studentIds = collect($request->student_details)->pluck('student_id')->unique();
+
+        // Find existing student IDs in the 'students' table
+        $existingStudentIds = \DB::table('students')->whereIn('id', $studentIds)->pluck('id')->toArray();
+
+        // Find invalid student IDs
+        $invalidIds = $studentIds->diff($existingStudentIds)->values();
+
+        // If any invalid IDs exist, return error in required format
+        if ($invalidIds->isNotEmpty()) {
+            $invalidList = $invalidIds->implode(', ');
+            return $this->errorResponse("The selected student IDs {$invalidList} do not exist in students table.", 404);
+        }
+
         $insertedCount = 0;
 
         foreach ($request->student_details as $detail) {
-            $updated = StudentDetail::updateOrInsert(
+            StudentDetail::updateOrInsert(
                 [
                     'student_id' => $detail['student_id'],
                     'date' => $detail['date'], // composite key
@@ -451,7 +553,7 @@ class StudentDetailController extends Controller
                     'remain_amount' => $detail['remain_amount'],
                     'remark' => $detail['remark'] ?? null,
                     'rate' => $detail['rate'],
-                    'rate_with_guest' => $detail['rate_with_guest'] ?? null,
+                    'rate_with_guest' => $detail['rate_with_guest'] ?? 0,
                     'status' => $detail['status'],
                     'updated_at' => now(),
                     'created_at' => now(),
@@ -460,8 +562,52 @@ class StudentDetailController extends Controller
 
             $insertedCount++;
         }
+
         $data['processed_count'] = $insertedCount;
         return $this->successResponse($data, 'Student details inserted/updated successfully');
+    }
+
+    public function deleteMonthlyData(Request $request)
+    {
+        $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year'  => 'required|integer|min:2000',
+        ]);
+
+        $month = $request->month;
+        $year  = $request->year;
+
+        \DB::beginTransaction();
+
+        try {
+            // StudentDetails: delete by date month-year
+            $studentDeleted = \DB::table('student_details')
+                ->whereMonth('date', $month)
+                ->whereYear('date', $year)
+                ->delete();
+
+            // MonthlyTransactions: delete by month field (assumed format YYYY-MM or YYYY-MM-DD)
+            $monthlyDeleted = \DB::table('monthly_transactions')
+                ->whereRaw("month = ? AND year = ?", [$month, $year])
+                ->delete();
+
+            // Expenses: delete by date month-year
+            $expensesDeleted = \DB::table('expenses')
+                ->whereMonth('date', $month)
+                ->whereYear('date', $year)
+                ->delete();
+
+            \DB::commit();
+
+            return $this->successResponse([
+                    'student_details' => $studentDeleted,
+                    'monthly_transactions' => $monthlyDeleted,
+                    'expenses' => $expensesDeleted,
+            ], "Data for month {$month}-{$year} deleted successfully.");
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return $this->errorResponse("Failed to delete records: " . $e->getMessage(), 500);
+        }
     }
 
 }
