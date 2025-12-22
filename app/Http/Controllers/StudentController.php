@@ -117,11 +117,21 @@ class StudentController extends Controller
 
     public function update(Request $request, $id)
     {
+        $student = Student::find($id);
+        if (!$student) {
+            return $this->errorResponse('Student not found.', 404);
+        }
+
+        $user = User::find($student->user_id);
+        if (!$user) {
+            return $this->errorResponse('User not found.', 404);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'hostel_name' => 'required',
             'room_no' => 'required',
-            'email' => 'required|email',
+            'email' => 'required|email|unique:students,email,' . $student->id . '|unique:users,email,' . $user->id,
             'residential_address' => 'nullable',
             'currently_pursuing' => 'required',
             'currently_studying_year' => 'required|integer',
@@ -139,27 +149,13 @@ class StudentController extends Controller
         if ($validator->fails()) {
             return $this->errorResponse('Validation error', 422, $validator->errors());
         }
-        try {
-            $student = Student::find($id);
-            if (!$student) {
-                return $this->errorResponse('Student not found.', 404);
-            }
-    
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email|unique:students,email,' . $student->id,
-                // 'mobile' => 'required|unique:students,mobile,' . $student->id,
-            ]);
-    
-            if ($validator->fails()) {
-                return $this->errorResponse('Validation error', 422, $validator->errors());
-            }
-    
+        try {    
             $student->update($request->all());
-            $user = User::where('id', $student->user_id)->first();
+            $user->email = $request->email;
             if ($request->filled('password')) {
                 $user->password = Hash::make($request->input('password'));
-                $user->update();
             }
+            $user->save();
             return $this->successResponse($student, 'Student updated successfully', 200);
         }
         catch (ModelNotFoundException $e) {

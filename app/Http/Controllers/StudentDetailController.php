@@ -288,6 +288,8 @@ class StudentDetailController extends Controller
             // $remain_amount = $student->remain_amount ?? 0;
             $penalty_amount = $student->penalty_amount ?? 0;
 
+            $student->paid_amount = $student->paid_amount ?? 0;
+
             $previousMonthRemain = !empty($previousDetail->remain_amount) ? $previousDetail->remain_amount : 0;
 
             $total_amount = ($student->total_eat_day * $rate) + $simple_guest_amount + $feast_guest_amount + $penalty_amount + $previousMonthRemain;
@@ -297,6 +299,8 @@ class StudentDetailController extends Controller
                 'amount' => $amount,
                 'total_amount' => $total_amount,
                 'due_amount' => $previousMonthRemain,
+                'remain_amount' => $total_amount - $student->paid_amount,
+                'paid_amount' => $student->paid_amount,
                 'status' => $status === 'lock' ? 'lock' : $status,
             ]);
         }
