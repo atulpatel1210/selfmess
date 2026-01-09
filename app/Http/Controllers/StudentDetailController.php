@@ -202,6 +202,14 @@ class StudentDetailController extends Controller
         $startOfMonth = Carbon::createFromDate($year ?? now()->year, $month ?? now()->month, 1)->startOfMonth()->toDateString();
         $endOfMonth = Carbon::createFromDate($year ?? now()->year, $month ?? now()->month, 1)->endOfMonth()->toDateString();
 
+        $lockedBill = StudentDetail::whereBetween('date', [$startOfMonth, $endOfMonth])
+        ->where('status', 'lock')
+        ->first();
+
+        if ($lockedBill) {
+            return $this->errorResponse('Bill is locked for the selected month. You cannot generate it again.',403);
+        }
+
         $totalCost = Expense::whereBetween('date', [$startOfMonth, $endOfMonth])->sum('amount');
 
         if ($totalCost === 0) {
@@ -269,6 +277,14 @@ class StudentDetailController extends Controller
 
         $currentMonthStart = Carbon::createFromDate($year, $month, 1)->startOfMonth();
         $currentMonthEnd = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+
+        $lockedBill = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])
+            ->where('status', 'lock')
+            ->first();
+
+        if ($lockedBill) {
+            return $this->errorResponse('Bill is already locked for the selected month. Update is not allowed.',403);
+        }
 
         $studentDetails = StudentDetail::whereBetween('date', [$currentMonthStart, $currentMonthEnd])->get();
 
@@ -386,6 +402,33 @@ class StudentDetailController extends Controller
         return $this->successResponse($studentDetails, 'Bill updated successfully for the selected month.');
     }
 
+    public function updateRemainAmount(Request $request) {
+        $request->validate([
+            'month' => 'required|integer|min:1|max:12',
+            'year'  => 'required|integer|min:2000',
+        ]);
+
+        $month = $request->month;
+        $year  = $request->year;
+
+        $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfMonth()->toDateString();
+
+        $endOfMonth = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString();
+
+        $students = StudentDetail::whereBetween('date', [$startOfMonth, $endOfMonth])->where('status', '!=', 'finalize')->get();
+
+        if ($students->isEmpty()) {
+            return $this->errorResponse('No student records found to update for the selected month.',404);
+        }
+
+        foreach ($students as $student) {
+            $student->update([
+                'remain_amount' => $student->total_amount
+            ]);
+        }
+
+        return $this->successResponse(['updated_records' => $students->count(),'month' => $month,'year'  => $year],'Remain amount updated successfully for the selected month.');
+    }
 
     public function getMonthlyTransaction(Request $request)
     {

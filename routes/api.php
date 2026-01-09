@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('student-details', StudentDetailController::class);
         Route::get('/generate-bill', [StudentDetailController::class, 'generateBill']);
         Route::post('/update-generated-bill', [StudentDetailController::class, 'updateGeneratedBill']);
+        Route::post('/update-remain-amount', [StudentDetailController::class, 'updateRemainAmount']);
         Route::post('/get-monthly-transaction', [StudentDetailController::class, 'getMonthlyTransaction']);
         Route::post('/bulk-store', [StudentDetailController::class, 'bulkStore']);
         Route::post('/delete-monthly-data', [StudentDetailController::class, 'deleteMonthlyData']);
@@ -59,6 +60,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', [StudentController::class, 'dashboard']);
         // Route::get('/summaries', [StudentSummaryController::class, 'index']);
         // Route::get('/summaries/{summary}', [StudentSummaryController::class, 'show']);
-        Route::apiResource('student-details', StudentDetailController::class);
+        // Route::apiResource('student-details', StudentDetailController::class);
     });
 });
