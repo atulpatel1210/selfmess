@@ -9,6 +9,8 @@ class Student extends Model
 {
     use HasFactory;
 
+    protected $appends = ['profile_image_url'];
+
     protected $fillable = [
         'name',
         'hostel_name',
@@ -27,6 +29,7 @@ class Student extends Model
         'user_id',
         'registration_no',
         'college_name',
+        'profile_image',
     ];
 
     public function user()
@@ -39,5 +42,10 @@ class Student extends Model
         static::deleting(function ($student) {
             $student->user()->delete();
         });
+    }
+
+    public function getProfileImageUrlAttribute()
+    {
+        return $this->profile_image ? asset('storage/' . $this->profile_image) : null;
     }
 }

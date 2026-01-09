@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
 {
@@ -56,6 +57,7 @@ class StudentController extends Controller
             'password' => 'required|min:6',
             'registration_no' => 'required',
             'college_name' => 'required',
+            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -64,6 +66,12 @@ class StudentController extends Controller
 
         $role = Role::where('name', 'student')->first();
         try {
+            $imagePath = null;
+            if ($request->hasFile('profile_image')) {
+                $imagePath = $request->file('profile_image')
+                    ->store('students', 'public');
+            }
+
             $user = User::create([
                 'name' => $request->input('name'),
                 'email' => $request->input('email'),
@@ -90,6 +98,7 @@ class StudentController extends Controller
                 'user_id' => $user->id,
                 'registration_no' => $request->input('registration_no'),
                 'college_name' => $request->input('college_name'),
+                'profile_image' => $imagePath,
             ]);
             return $this->successResponse($student, 'Student created successfully', 201);
         } catch (QueryException $e) {
@@ -144,12 +153,20 @@ class StudentController extends Controller
             'password' => 'nullable|min:6',
             'registration_no' => 'required',
             'college_name' => 'required',
+            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
     
         if ($validator->fails()) {
             return $this->errorResponse('Validation error', 422, $validator->errors());
         }
-        try {    
+        try {
+            if ($request->hasFile('profile_image')) {
+                if ($student->profile_image && Storage::disk('public')->exists($student->profile_image)) {
+                    Storage::disk('public')->delete($student->profile_image);
+                }
+                $imagePath = $request->file('profile_image')->store('students', 'public');
+                $student->profile_image = $imagePath;
+            }
             $student->update($request->all());
             $user->email = $request->email;
             if ($request->filled('password')) {

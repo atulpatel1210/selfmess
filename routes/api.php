@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RateMasterController;
 use App\Http\Controllers\StudentDetailController;
+use App\Http\Controllers\DayMealController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
@@ -34,6 +35,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/delete-monthly-data', [StudentDetailController::class, 'deleteMonthlyData']);
         Route::get('/truncate-tables', [StudentDetailController::class, 'truncateAllTables']);
         Route::apiResource('/configs', ConfigController::class);
+        Route::get('/day-meals', [DayMealController::class, 'index']);
+        Route::get('/day-meals/{id}', [DayMealController::class, 'view']);
+        Route::put('/day-meals/{id}', [DayMealController::class, 'update']);
+
         // Route::apiResource('/summaries', StudentSummaryController::class);
         // Route::apiResource('attendances', StudentAttendanceController::class);
         // Route::post('/summaries/generate-monthly', [StudentSummaryController::class, 'generateMonthlySummaries']);
