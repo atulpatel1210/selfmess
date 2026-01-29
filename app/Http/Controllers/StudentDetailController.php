@@ -11,10 +11,11 @@ use App\Models\MonthlyTransaction;
 use Carbon\Carbon;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Traits\FirebaseNotification;
 
 class StudentDetailController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, FirebaseNotification;
 
     public function index_old(Request $request)
     {
@@ -319,6 +320,29 @@ class StudentDetailController extends Controller
                 'paid_amount' => $student->paid_amount,
                 'status' => $status === 'lock' ? 'lock' : $status,
             ]);
+
+            if ($status === 'lock') {
+                $studentData = Student::with('user')->find($student->student_id);
+                if ($studentData && $studentData->user && $studentData->user->mobile) {
+                    $monthName = Carbon::createFromDate($year, $month, 1)->format('F');
+                    $title = "Monthly Bill - $monthName $year";
+                    $body = "Your bill for $monthName $year is ₹$total_amount. Total eaten days: $student->total_eat_day, Rate: ₹$rate.";
+                    
+                    // Sending to topic based on mobile number
+                    $this->sendFirebaseNotification(
+                        $studentData->user->mobile, 
+                        $title,
+                        $body,
+                        [
+                            'type' => 'bill_generated',
+                            'month' => (string)$month,
+                            'year' => (string)$year,
+                            'total_amount' => (string)$total_amount
+                        ],
+                        true // isTopic = true
+                    );
+                }
+            }
         }
 
         if ($status === 'lock') {

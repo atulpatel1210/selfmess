@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RateMasterController;
 use App\Http\Controllers\StudentDetailController;
 use App\Http\Controllers\DayMealController;
+use App\Http\Controllers\DashboardController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
@@ -24,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin Routes
     Route::middleware(['role:admin,secretary,staff'])->prefix('admin')->group(function () {
         Route::get('/dashboard', [StudentController::class, 'dashboard']);
+        Route::get('/chart-stats', [DashboardController::class, 'getChartStats']);
         Route::apiResource('/students', StudentController::class);
         Route::apiResource('/expenses', ExpenseController::class);
         Route::apiResource('student-details', StudentDetailController::class);
