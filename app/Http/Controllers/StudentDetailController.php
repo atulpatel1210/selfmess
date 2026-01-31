@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Traits\ApiResponse;
 use App\Models\Expense;
 use App\Models\MonthlyTransaction;
+use App\Models\Notification;
 use Carbon\Carbon;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -340,6 +341,17 @@ class StudentDetailController extends Controller
                         ],
                         false // isTopic = false
                     );
+                    Notification::create([
+                        'student_id' => $student->student_id,
+                        'type'       => 'bill_generated',
+                        'title'      => $title,
+                        'body'       => $body,
+                        'payload'    => [
+                            'month'        => (string)$month,
+                            'year'         => (string)$year,
+                            'total_amount' => (string)$total_amount
+                        ],
+                    ]);
                 }
             }
         }
