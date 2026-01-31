@@ -19,7 +19,7 @@ class DashboardController extends Controller
             // User requested "previous two months".
             
             $stats = MonthlyTransaction::orderBy('bill_date', 'desc')
-                ->take(6) // Taking 6 to show a decent trend, but will focus on last 2 if needed
+                ->take(6)
                 ->get()
                 ->reverse()
                 ->values();
@@ -28,7 +28,7 @@ class DashboardController extends Controller
                 return [
                     'month_name' => Carbon::parse($stat->bill_date)->format('M Y'),
                     'expense' => (float)$stat->current_month_expense,
-                    'income' => (float)$stat->current_total_collection, // Collection is the income
+                    'income' => (float)$stat->current_total_collection,
                     'profit' => (float)$stat->current_month_profit,
                 ];
             });

@@ -323,14 +323,13 @@ class StudentDetailController extends Controller
 
             if ($status === 'lock') {
                 $studentData = Student::with('user')->find($student->student_id);
-                if ($studentData && $studentData->user && $studentData->user->mobile) {
+                if ($studentData && $studentData->user && $studentData->user->fcm_token) {
                     $monthName = Carbon::createFromDate($year, $month, 1)->format('F');
                     $title = "Monthly Bill - $monthName $year";
                     $body = "Your bill for $monthName $year is ₹$total_amount. Total eaten days: $student->total_eat_day, Rate: ₹$rate.";
                     
-                    // Sending to topic based on mobile number
                     $this->sendFirebaseNotification(
-                        $studentData->user->mobile, 
+                        $studentData->user->fcm_token, 
                         $title,
                         $body,
                         [
@@ -339,7 +338,7 @@ class StudentDetailController extends Controller
                             'year' => (string)$year,
                             'total_amount' => (string)$total_amount
                         ],
-                        true // isTopic = true
+                        false // isTopic = false
                     );
                 }
             }

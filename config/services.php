@@ -32,9 +32,9 @@ return [
     ],
     'firebase' => [
         'credentials' => [
-            'file' => storage_path('app/firebase-credentials.json'), // તમારા સર્વિસ એકાઉન્ટ કીનો પાથ
+            'file' => storage_path('app/firebase-credentials.json'),
         ],
-        'database_uri' => env('FIREBASE_DATABASE_URI'), // જો તમે Firebase રિયલટાઇમ ડેટાબેઝનો ઉપયોગ કરો છો
+        'database_uri' => env('FIREBASE_DATABASE_URI'),
     ],
 
 ];

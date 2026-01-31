@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/day-meals', [DayMealController::class, 'index']);
         Route::get('/day-meals/{id}', [DayMealController::class, 'view']);
         Route::put('/day-meals/{id}', [DayMealController::class, 'update']);
+        Route::post('/update-fcm-token', [StudentController::class, 'updateFcmToken']);
 
         // Route::apiResource('/summaries', StudentSummaryController::class);
         // Route::apiResource('attendances', StudentAttendanceController::class);

@@ -202,4 +202,11 @@ class StudentController extends Controller
             return $this->errorResponse('Destroy error: ' . $e->getMessage(), 500);
         }
     }
+
+    public function updateFcmToken(Request $request)
+    {
+        $request->validate(['fcm_token' => 'required']);
+        $request->user()->update(['fcm_token' => $request->fcm_token]);
+        return response()->json(['message' => 'Token updated successfully']);
+    }
 }

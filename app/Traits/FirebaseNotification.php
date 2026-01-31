@@ -17,10 +17,11 @@ trait FirebaseNotification
      * @param array $data Additional data payload
      * @param bool $isTopic Whether the target is a topic
      */
-    public function sendFirebaseNotification($target, $title, $body, $data = [], $isTopic = true)
+    public function sendFirebaseNotification($target, $title, $body, $data = [], $isTopic = false)
     {
         try {
-            $serviceAccountPath = config('services.firebase.credentials.file');
+            // $serviceAccountPath = config('services.firebase.credentials.file');
+            $serviceAccountPath = base_path(config('services.firebase.credentials.file'));
             
             if (!file_exists($serviceAccountPath)) {
                 \Log::error("Firebase credentials file not found at: " . $serviceAccountPath);
