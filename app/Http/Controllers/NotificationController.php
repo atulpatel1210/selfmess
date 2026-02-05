@@ -27,40 +27,77 @@ class NotificationController extends Controller
     public function sendCustomNotification(Request $request)
     {
         $request->validate([
-            'student_id' => 'required|exists:students,id',
+            'student_id' => 'nullable|exists:students,id',
             'title'      => 'required|string',
             'body'       => 'required|string',
             'type'       => 'required|string',
         ]);
 
-        $studentData = \App\Models\Student::with('user')->find($request->student_id);
+        // CASE 1: student_id pass che → single student
+        if ($request->filled('student_id')) {
 
-        if (!$studentData || !$studentData->user) {
-            return $this->errorResponse('Student or User not found.', 409);
+            $studentData = \App\Models\Student::with('user')->find($request->student_id);
+
+            if (!$studentData || !$studentData->user) {
+                return $this->errorResponse('Student or User not found.', 409);
+            }
+
+            $notification = \App\Models\Notification::create([
+                'student_id' => $studentData->id,
+                'type'       => $request->type,
+                'title'      => $request->title,
+                'body'       => $request->body,
+                'payload'    => $request->payload ?? [],
+            ]);
+
+            if ($studentData->user->fcm_token) {
+                $this->sendFirebaseNotification(
+                    $studentData->user->fcm_token,
+                    $request->title,
+                    $request->body,
+                    [
+                        'type' => $request->type,
+                        'notification_id' => (string) $notification->id,
+                    ],
+                    false
+                );
+            }
+
+            return $this->successResponse($notification, 'Notification sent to student', 201);
         }
 
-        $notification = \App\Models\Notification::create([
-            'student_id' => $request->student_id,
-            'type'       => $request->type,
-            'title'      => $request->title,
-            'body'       => $request->body,
-            'payload'    => $request->payload ?? [],
-        ]);
+        // CASE 2: student_id nathi → badha students
+        $students = \App\Models\Student::with('user')
+            ->whereHas('user', function ($q) {
+                $q->whereNotNull('fcm_token');
+            })
+            ->get();
 
-        if ($studentData->user->fcm_token) {
+        foreach ($students as $student) {
+
+            $notification = \App\Models\Notification::create([
+                'student_id' => $student->id,
+                'type'       => $request->type,
+                'title'      => $request->title,
+                'body'       => $request->body,
+                'payload'    => $request->payload ?? [],
+            ]);
+
             $this->sendFirebaseNotification(
-                $studentData->user->fcm_token,
+                $student->user->fcm_token,
                 $request->title,
                 $request->body,
                 [
                     'type' => $request->type,
-                    'notification_id' => (string)$notification->id
+                    'notification_id' => (string) $notification->id,
                 ],
-                false // isTopic = false (Web/Individual)
+                false
             );
         }
-        return $this->successResponse($notification, 'Notification sent and stored successfully', 201);
+
+        return $this->successResponse([], 'Notification sent to all students', 201);
     }
+
 
     public function markAsRead($id)
     {
