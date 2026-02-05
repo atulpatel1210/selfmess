@@ -1,15 +1,12 @@
 <?php
 
-use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\StudentController;
-use App\Http\Controllers\StudentSummaryController;
-use App\Http\Controllers\StudentAttendanceController;
 use App\Http\Controllers\ExpenseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\RateMasterController;
 use App\Http\Controllers\StudentDetailController;
 use App\Http\Controllers\DayMealController;
 use App\Http\Controllers\DashboardController;
