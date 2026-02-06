@@ -108,4 +108,30 @@ class NotificationController extends Controller
         }
         return $this->errorResponse('Notification not found.', 409);
     }
+
+    public function deleteNotification($id)
+    {
+        $notification = Notification::find($id);
+        if ($notification) {
+            $notification->delete();
+            return $this->successResponse(null, 'Notification deleted successfully', 201);
+        }
+        return $this->errorResponse('Notification not found.', 409);
+    }
+
+    public function deleteStudentNotifications($student_id = null)
+    {
+        $query = Notification::query();
+
+        if ($student_id) {
+            $query->where('student_id', $student_id);
+            $message = 'All notifications for student deleted successfully';
+        } else {
+            $message = 'All notifications deleted successfully';
+        }
+
+        $deletedCount = $query->delete();
+        
+        return $this->successResponse(['deleted_count' => $deletedCount], $message, 201);
+    }
 }

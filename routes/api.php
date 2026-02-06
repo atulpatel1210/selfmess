@@ -42,6 +42,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/notifications/{student_id?}', [NotificationController::class, 'getStudentNotifications']);
         Route::post('/read-notifications/{id}', [NotificationController::class, 'markAsRead']);
         Route::post('/send-notification', [NotificationController::class, 'sendCustomNotification']);
+        Route::get('/delete-notification/{id}', [NotificationController::class, 'deleteNotification']);
+        Route::get('/delete-student-notification/{student_id?}', [NotificationController::class, 'deleteStudentNotifications']);
 
         // Route::apiResource('/summaries', StudentSummaryController::class);
         // Route::apiResource('attendances', StudentAttendanceController::class);
