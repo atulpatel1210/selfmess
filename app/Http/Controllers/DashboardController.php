@@ -19,7 +19,7 @@ class DashboardController extends Controller
             // User requested "previous two months".
             
             $stats = MonthlyTransaction::orderBy('bill_date', 'desc')
-                ->take(6)
+                ->take(2)
                 ->get()
                 ->reverse()
                 ->values();

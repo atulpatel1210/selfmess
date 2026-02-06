@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/bulk-store', [StudentDetailController::class, 'bulkStore']);
         Route::post('/delete-monthly-data', [StudentDetailController::class, 'deleteMonthlyData']);
         Route::get('/truncate-tables', [StudentDetailController::class, 'truncateAllTables']);
+        Route::get('/truncate-tables-monthly-transaction', [StudentDetailController::class, 'truncateMontlyTransactionTables']);
         Route::apiResource('/configs', ConfigController::class);
         Route::get('/day-meals', [DayMealController::class, 'index']);
         Route::get('/day-meals/{id}', [DayMealController::class, 'view']);
