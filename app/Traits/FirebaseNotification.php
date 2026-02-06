@@ -20,12 +20,11 @@ trait FirebaseNotification
     public function sendFirebaseNotification($target, $title, $body, $data = [], $isTopic = false)
     {
         try {
-            // $serviceAccountPath = config('services.firebase.credentials.file');
-            $serviceAccountPath = base_path(config('services.firebase.credentials.file'));
+            $serviceAccountPath = config('services.firebase.credentials.file');
             
             if (!file_exists($serviceAccountPath)) {
                 \Log::error("Firebase credentials file not found at: " . $serviceAccountPath);
-                return false;
+                throw new \Exception("Firebase credentials file not found at: " . $serviceAccountPath);
             }
 
             $factory = (new Factory)->withServiceAccount($serviceAccountPath);
