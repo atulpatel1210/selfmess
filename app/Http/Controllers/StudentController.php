@@ -39,6 +39,7 @@ class StudentController extends Controller
 
     public function store(Request $request)
     {
+        dd($request->file);
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'hostel_name' => 'required',
@@ -160,14 +161,15 @@ class StudentController extends Controller
             return $this->errorResponse('Validation error', 422, $validator->errors());
         }
         try {
+            $data = $request->except(['profile_image', 'password']);
             if ($request->hasFile('profile_image')) {
                 if ($student->profile_image && Storage::disk('public')->exists($student->profile_image)) {
                     Storage::disk('public')->delete($student->profile_image);
                 }
-                $imagePath = $request->file('profile_image')->store('students', 'public');
-                $student->profile_image = $imagePath;
+                $data['profile_image'] = $request->file('profile_image')->store('students', 'public');
             }
-            $student->update($request->all());
+            $student->update($data);
+            $user->name = $request->name;
             $user->email = $request->email;
             if ($request->filled('password')) {
                 $user->password = Hash::make($request->input('password'));
