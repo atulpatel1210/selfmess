@@ -39,7 +39,6 @@ class StudentController extends Controller
 
     public function store(Request $request)
     {
-        dd($request->file);
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'hostel_name' => 'required',
